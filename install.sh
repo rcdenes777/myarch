@@ -20,18 +20,7 @@ sleep 1s
   timedatectl set-ntp true
   timedatectl status
   
-echo -e "\n${BOL_GRE}Verify the boot mode${END}"
-sleep 1s
-  if [ -d /sys/firmware/efi ]; then
-	  BIOS_TYPE="uefi"
-    echo -e "\n${BOL_BLU}Install UEFI MODE${END}"
-    sleep 1s
-	  
-  else
-	  BIOS_TYPE="bios"
-    echo -e "\n${BOL_BLU}Install BIOS LEGACY MODE${END}"
-    sleep 1s
-  fi
+
 
 
 read -r -p "${BOL_GRE}You username? ${MAG}enter=${CYA}mamutal91${END}" USERNAME
@@ -108,7 +97,7 @@ create_GPTorMBR(){
 }
 
 createNew_partition_scheme(){
-  echo -e "\n${BOL_MAG}Criando duas partiçoes, uma de boot de 512MiB e o / com o restante do espaço${END}"
+  echo -e "\n${BOL_MAG}Criando duas partiçoes, uma de boot de 512MiB e a Raiz / com o restante do espaço${END}"
 	# Creating a new partition scheme.
 	echo "Creating new $part_type partition scheme on $DISK."
 	# Ask for partition name
@@ -123,22 +112,45 @@ createNew_partition_scheme(){
 	ESP="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep boot | cut -d " " -f1 | cut -c7-)"
 	echo "Partition boot: ${ESP}"
 	sleep 1s
+	
 	BTRFS="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep archlinux | cut -d " " -f1 | cut -c7-)"
 	echo "Partition Root: $BTRFS"
-	sleep 0.5s
+	sleep 1s
+	
+	# Informing the Kernel of the changes.
+	echo "Informing the Kernel about the disk changes."
+	sleep 1s
+	partprobe "$DISK"
+
 }
 
-
-
-
-
-
-
-
-formatDrive() {
+verifyBoot_mode() {
+  # Formatting the ESP as FAT32.
   
+  echo -e "\n${BOL_GRE}Verify the boot mode${END}"
+  sleep 1s
+  	if [ -d /sys/firmware/efi ]; then
+	  	BIOS_TYPE="uefi"
+    		echo -e "\n${BOL_BLU}Install UEFI MODE${END}"
+    		sleep 1s
+	  
+  	else
+	  	BIOS_TYPE="bios"
+   	 	echo -e "\n${BOL_BLU}Install BIOS LEGACY MODE${END}"
+    		sleep 1s
+ 	 fi
+formatting_UEFI_BIOS() {
+echo -e "\n${BOL_YEL}Formatting the EFI Partition as FAT32 or BIOS as${END}"
 
+	if [ "$BIOS_TYPE" == "uefi" ]; then
+		mkfs.fat -F32 "$ESP"
+	fi
 	
+	if [ "$BIOS_TYPE" == "bios" ]; then
+		mkfs.ext4 "$ESP"
+	fi
+}
+		
 	if [ "$BIOS_TYPE" == "uefi" ]; then
 		mkdir -p /mnt/boot/efi
 		mount "$ESP" /mnt/boot/efi
@@ -150,12 +162,8 @@ formatDrive() {
 	fi
 
 
-# Informing the Kernel of the changes.
-echo "Informing the Kernel about the disk changes."
-sleep 2s
-partprobe "$DISK"
 
-}
+
 
 encryptSystem() {
   echo -e "\n${BOL_GRE}Criptografando partição principal - $SSD3 ${END}"
@@ -289,6 +297,8 @@ run() {
   deletionPartition_scheme_old
   create_GPTorMBR
   createNew_partition_scheme
+  verifyBoot_mode
+  formatting_UEFI_BIOS
   
   
   
