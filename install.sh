@@ -2,49 +2,19 @@
 
 source colors.sh
 
-
-  
-
-    
-    
 echo -e "\n${BOL_GRE}Update the system clock${END}"
 sleep 1s
   timedatectl set-ntp true
   timedatectl status
   
-
-
-
-read -r -p "${BOL_GRE}You username? ${MAG}enter=${CYA}mamutal91${END}" USERNAME
-[[ -z $USERNAME ]] && USERNAME=mamutal91 || USERNAME=$USERNAME
-echo -e "  ${YEL}$USERNAME${END}\n"
-read -r -p "${BOL_GRE}You hostname? ${MAG}enter=${CYA}odin${END}" HOSTNAME
-[[ -z $HOSTNAME ]] && HOSTNAME=odin || HOSTNAME=$HOSTNAME
-echo -e "  ${YEL}$HOSTNAME${END}\n"
-
-if [[ $USERNAME == mamutal91 ]]; then
-  SSD=/dev/nvme0n1 # ssd m2 nvme
-  SSD1=/dev/nvme0n1p1 # EFI (boot)
-  SSD2=/dev/nvme0n1p2 # cryptswap
-  SSD3=/dev/nvme0n1p3 # cryptsystem
-  # Use este
-#  SSD=/dev/sda # ssd m2
-#  SSD1=/dev/sda1 # EFI (boot)
-#  SSD2=/dev/sda2 # cryptswap
-#  SSD3=/dev/sda3 # cryptsystem
-else
-  echo -e "Specify disks!!!
-  Examples:\n\n
-  SSD=/dev/nvme0n1 # ssd m2 nvme
-  SSD1=/dev/nvme0n1p1 # EFI (boot)
-  SSD2=/dev/nvme0n1p2 # cryptswap
-  SSD3=/dev/nvme0n1p3 # cryptsystem
-  STORAGE_NVME=/dev/sdb # ssd
-  STORAGE_HDD=/dev/sda # hdd"
-  exit 0
-fi
-
-}
+ 
+echo -e "\n${BOL_GRE}Checking the microcode to install${END}"
+	CPU=$(grep vendor_id /proc/cpuinfo)
+	if [[ $CPU == *"AuthenticAMD"* ]]; then
+   	 microcode=amd-ucode
+	else
+    	microcode=intel-ucode
+	fi
 
 selectDisk() {
   echo -e "\n${BOL_GRE}Selecionando o disco para instatalçao: sda,sbc,nvme0n1 ${END}"
@@ -287,6 +257,7 @@ reflectorMirrors() {
 	echo -e "\n${BOL_BLU}Mirrors have been successfully updated${END}"
 	sleep 1s
 	pacman -Syyy --noconfirm
+	
 }
 
 configurandoPacman(){
@@ -302,21 +273,32 @@ configurandoPacman(){
 
 pacstrapInstall() {
   pacman -Sy archlinux-keyring git --noconfirm --needed
-  pacstrap /mnt --noconfirm \
-    base base-devel bash-completion archlinux-keyring \
-    linux-lts linux-lts-headers linux linux-headers \
-    linux-hardened linux-hardened-headers \
-    linux-firmware linux-firmware-whence \
-    mkinitcpio pacman-contrib archiso git \
-    linux-api-headers util-linux util-linux-libs lib32-util-linux \
-    btrfs-progs efibootmgr efitools gptfdisk grub grub-btrfs \
-    iwd networkmanager dhcpcd sudo nano reflector openssh git curl wget zsh \
-    alsa-firmware alsa-utils alsa-plugins pulseaudio pulseaudio-bluetooth pavucontrol \
-    sox bluez bluez-libs bluez-tools bluez-utils feh rofi dunst picom \
-    stow nano nano-syntax-highlighting neofetch vlc gpicview zsh zsh-syntax-highlighting maim ffmpeg \
-    imagemagick slop terminus-font noto-fonts-emoji ttf-dejavu ttf-liberation \
-    xorg-server xorg-xrandr xorg-xbacklight xorg-xinit xorg-xprop xorg-server-devel xorg-xsetroot xclip xsel xautolock xorg-xdpyinfo xorg-xinput \
-    i3-gaps i3lock alacritty thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman telegram-desktop
+  
+  echo -e "\n${BOL_CYA}Instalando base sistema${END}"
+  pacstrap /mnt base base-devel bash-completion archlinux-keyring 
+  
+  echo -e "\n${BOL_CYA}Instalando kenel vanillia linux${END}"
+  pacstrap /mnt linux linux-headers
+  
+  echo -e "\n${BOL_CYA}Instalando kenel linux-lts${END}"
+  pacstrap /mnt  linux-lts linux-lts-headers 
+  
+  echo -e "\n${BOL_CYA}Instalando firmware kenel linux${END}"
+  pacstrap /mnt  linux-firmware linux-firmware-whence \
+  
+  echo -e "\n${BOL_CYA}Instalando linux headers, util e libs${END}"
+  pacstrap /mnt linux-api-headers util-linux util-linux-libs lib32-util-linux
+  
+  pacstrap /mnt  mkinitcpio pacman-contrib archiso git \
+  pacstrap /mnt  linux-api-headers util-linux util-linux-libs lib32-util-linux \
+  pacstrap /mnt  btrfs-progs efibootmgr efitools gptfdisk grub grub-btrfs \
+  pacstrap /mnt  iwd networkmanager dhcpcd sudo nano reflector openssh git curl wget zsh \
+  pacstrap /mnt  alsa-firmware alsa-utils alsa-plugins pulseaudio pulseaudio-bluetooth pavucontrol \
+  pacstrap /mnt  sox bluez bluez-libs bluez-tools bluez-utils feh rofi dunst picom \
+  pacstrap /mnt  stow nano nano-syntax-highlighting neofetch vlc gpicview zsh zsh-syntax-highlighting maim ffmpeg \
+  pacstrap /mnt  imagemagick slop terminus-font noto-fonts-emoji ttf-dejavu ttf-liberation \
+  pacstrap /mnt  xorg-server xorg-xrandr xorg-xbacklight xorg-xinit xorg-xprop xorg-server-devel xorg-xsetroot xclip xsel xautolock xorg-xdpyinfo xorg-xinput \
+  pacstrap /mnt  i3-gaps i3lock alacritty thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman telegram-desktop
 }
 
 genfstabGenerator() {
