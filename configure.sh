@@ -2,11 +2,6 @@
 source colors.sh
 
 
-
-# Get the device uuid
-#SSD2_UUID=$(blkid $SSD2 | awk -F '"' '{print $2}')
-#SSD3_UUID=$(blkid $SSD3 | awk -F '"' '{print $2}')
-
 # Setting username.
 read -r -p "Please enter name for a user account (leave empty to skip): " USERNAME
 
@@ -64,11 +59,11 @@ grubConfigs() {
   #sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/g' /etc/default/grub
     
   if [ -d /sys/firmware/efi ]; then
-	  pacman -S btrfs-progs grub grub-btrfs efibootmgr --noconfirm
+	  
 	  grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
 	  grub-mkconfig -o /boot/grub/grub.cfg
   else
-	  pacman -S btrfs-progs grub grub-btrfs --noconfirm
+	  
 	  grub-install --target=i386-pc "$DISK"
 	  grub-mkconfig -o /boot/grub/grub.cfg
   fi
