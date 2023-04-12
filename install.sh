@@ -3,6 +3,27 @@
 source colors.sh
 
 clear
+echo -e "\n${BOL_GRE}Cololindo o Pacman e Liberando Multilib${END}"
+  sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+  sed -i 's/#UseSyslog/UseSyslog/' /etc/pacman.conf
+  sed -i 's/#Color/Color\\\nILoveCandy/' /etc/pacman.conf
+  sed -i 's/Color\\/Color/' /etc/pacman.conf
+  sed -i 's/#TotalDownload/TotalDownload/' /etc/pacman.conf
+  sed -i 's/#CheckSpace/CheckSpace/' /etc/pacman.conf
+  sed -i "s/#VerbosePkgLists/VerbosePkgLists/g" /etc/pacman.conf
+  sed -i "s/#ParallelDownloads = 5/ParallelDownloads = 5/g" /etc/pacman.conf
+  
+echo -e "\n${BOL_GRE}Select the mirrors${END}"
+  pacman -Syyy --noconfirm
+  pacman -S --noconfirm reflector
+  #reflector --latest 40  --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+  #reflector -c BR --sort rate -a 6 --save /etc/pacman.d/mirrorlist
+  reflector --country Brazil   --protocol http --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+
+echo -e "\n${BOL_BLU}Mirror selection completed${END}"
+  pacman -Syyy --noconfirm
+
+
 
 read -r -p "${BOL_GRE}You username? ${MAG}enter=${CYA}mamutal91${END}" USERNAME
 [[ -z $USERNAME ]] && USERNAME=mamutal91 || USERNAME=$USERNAME
