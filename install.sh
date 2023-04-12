@@ -289,9 +289,21 @@ pacstrapInstall() {
   echo -e "\n${BOL_CYA}Instalando linux headers, util e libs${END}"
   pacstrap /mnt linux-api-headers util-linux util-linux-libs lib32-util-linux
   
-  pacstrap /mnt  mkinitcpio pacman-contrib archiso git \
-  pacstrap /mnt  linux-api-headers util-linux util-linux-libs lib32-util-linux \
-  pacstrap /mnt  btrfs-progs efibootmgr efitools gptfdisk grub grub-btrfs \
+  echo -e "\n${BOL_CYA}Instalando bootloader e ferramentas relacionadas${END}"
+  pacstrap /mnt grub grub-btrfs grub-theme-vimix os-prober efibootmgr efitools gptfdisk
+  
+  echo -e "\n${BOL_CYA}Suporte a sistemas de arquivos${END}"
+  pacstrap /mnt  btrfs-progs snapper dosfstools exfat-utils f2fs-tools fuse fuse-exfat mtpfs
+    
+  echo -e "\n${BOL_CYA}Xorg${END}"
+  pacstrap /mnt xorg-server xf86-input-evdev
+  
+  echo -e "\n${BOL_CYA}Ferramentas de linha de comando${END}"
+  pacstrap /mnt bash-completion sudo nano nano-syntax-highlighting neofetch zsh zsh-syntax-highlighting
+
+  echo -e "\n${BOL_CYA}KDE Plasma${END}"
+  pacstrap /mnt plasma-desktop konsole ark dolphin dolphin-plugins kate partitionmanager filelight okular plasma-nm kdeplasma-addons kcalc plasma-browser-integration
+
   pacstrap /mnt  iwd networkmanager dhcpcd sudo nano reflector openssh git curl wget zsh \
   pacstrap /mnt  alsa-firmware alsa-utils alsa-plugins pulseaudio pulseaudio-bluetooth pavucontrol \
   pacstrap /mnt  sox bluez bluez-libs bluez-tools bluez-utils feh rofi dunst picom \
@@ -299,6 +311,7 @@ pacstrapInstall() {
   pacstrap /mnt  imagemagick slop terminus-font noto-fonts-emoji ttf-dejavu ttf-liberation \
   pacstrap /mnt  xorg-server xorg-xrandr xorg-xbacklight xorg-xinit xorg-xprop xorg-server-devel xorg-xsetroot xclip xsel xautolock xorg-xdpyinfo xorg-xinput \
   pacstrap /mnt  i3-gaps i3lock alacritty thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman telegram-desktop
+
 }
 
 genfstabGenerator() {
