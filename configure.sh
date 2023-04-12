@@ -77,21 +77,56 @@ systemdConfigs() {
 adicionalPackges_install(){
   echo -e "\n${BOL_CYA}Ferramentas de linha de comando 2${END}"
   pacman -S neofetch zsh zsh-syntax-highlighting --noconfirm
+  
+  echo -e "\n${BOL_CYA}Audio${END}"
+  pacman -S pipewire pipewire-alsa pipewire-pulse kpipewire --noconfirm
 
   echo -e "\n${BOL_CYA}KDE Plasma${END}"
-  pacman -S plasma-desktop --noconfirm
+  pacman -S plasma-desktop networkmanager --noconfirm
 
   echo -e "\n${BOL_CYA}KDE Plasma utilitarios e extras${END}"
-  pacman -S konsole ark dolphin dolphin-plugins kate partitionmanager filelight okular plasma-nm kdeplasma-addons kcalc plasma-browser-integration --noconfirm
-  pacstrap /mnt  iwd networkmanager dhcpcd sudo nano reflector openssh git curl wget zsh \
-  pacstrap /mnt  alsa-firmware alsa-utils alsa-plugins pulseaudio pulseaudio-bluetooth pavucontrol \
-  pacstrap /mnt  sox bluez bluez-libs bluez-tools bluez-utils feh rofi dunst picom \
-  pacstrap /mnt  stow nano nano-syntax-highlighting neofetch vlc gpicview zsh zsh-syntax-highlighting maim ffmpeg \
-  pacstrap /mnt  imagemagick slop terminus-font noto-fonts-emoji ttf-dejavu ttf-liberation \
-  pacstrap /mnt  xorg-server xorg-xrandr xorg-xbacklight xorg-xinit xorg-xprop xorg-server-devel xorg-xsetroot xclip xsel xautolock xorg-xdpyinfo xorg-xinput \
-  pacstrap /mnt  i3-gaps i3lock alacritty thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman telegram-desktop
+  pacman -S konsole ark dolphin dolphin-plugins kate partitionmanager filelight okular plasma-nm kdeplasma-addons yakuake kdegraphics-thumbnailers plasma-workspace-wallpapers kcalc plasma-browser-integration --noconfirm
+  
+  echo -e "\n${BOL_CYA}Firewall${END}"
+  pacman -S ufw gufw --noconfirm
+  
+  echo -e "\n${BOL_CYA}Gerenciador loguin${END}"
+  pacman -S sddm sddm-kcm --noconfirm
+  
+  echo -e "\n${BOL_CYA}Fonts${END}"
+  pacman -S adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts gnu-free-fonts terminus-font noto-fonts-emoji ttf-dejavu ttf-liberation --noconfirm
+  
+  echo -e "\n${BOL_CYA}Ferramentas de compressao${END}"
+  pacman -S unace unrar p7zip arj cabextract lzip zlib laszip lbzip2 lrzip pbzip2 lzop --noconfirm
+  
+  echo -e "\n${BOL_CYA}INTERNET${END}"
+  pacman -S chromium firefox firefox-i18n-pt-br qbittorrent thunderbird thunderbird-i18n-pt-br --noconfirm
+  
+  
+  echo -e "\n${BOL_CYA}AUDIO E VIDEO${END}"
+  pacman -S elisa smplayer vlc ffmpeg ffmpegthumbnailer ffmpegthumbs ffmpeg ffmpegthumbnailer gst-libav gst-plugins-ugly gstreamer gst-plugins-good libdvdread lame libdvbpsi libiec61883 libmad libmpeg2 mjpegtools mpg123 xvidcore --noconfirm
+  
+  echo -e "\n${BOL_CYA}OPENGLl${END}"
+  pacman -S mesa mesa-demos --noconfirm
+  
+  echo -e "\n${BOL_CYA}LIBREOFFICE COM CORREÇÃO ORTOGRÁFICA${END}"
+  pacman -S libreoffice-fresh libreoffice-fresh-pt-br languagetool aspell-pt libmythes  --noconfirm
+  
+  echo -e "\n${BOL_CYA}INSTALL ADDITIONAL for android${END}"
+  pacman -S libmtp android-udev --noconfirm
+ 
  
  }
+yayInstall(){ 
+	echo -e "\n${BOL_CYA}Instalando suporte a AUR${END}"
+	echo "Instalando suporte a AUR."
+	echo "################################################################"
+	echo;tput sgr0
+	sleep 5s
+	sudo pacman -S --noconfirm git go
+	git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
+	sleep 1s    
+}
 sshConfigs() {
   pwd=$(pwd)
     rm -rf /etc/ssh/ssh_config
@@ -112,6 +147,8 @@ systemctlConfigs() {
   systemctl enable snapper-timeline.timer 
   systemctl enable snapper-cleanup.timer 
   systemctl enable grub-btrfs.path
+  systemctl enable ufw.service
+
   #systemctl enable dhcpcd
   #systemctl enable iwd
   systemctl enable sshd.service
@@ -129,11 +166,11 @@ snapperConfiguration(){
     mount -a
     chmod 750 /.snapshots
     echo  "TIMELINE_MIN_AGE="1800"" >> /mnt/etc/snapper/configs/root
-	echo  "TIMELINE_LIMIT_HOURLY="2"" >> /mnt//etc/snapper/configs/root
-	echo  "TIMELINE_LIMIT_DAILY="3"" >> /mnt//etc/snapper/configs/root
-	echo  "TIMELINE_LIMIT_WEEKLY="7"" >> /mnt//etc/snapper/configs/root
-	echo  "TIMELINE_LIMIT_MONTHLT="7"" >> /mnt//etc/snapper/configs/root
-	echo  "TIMELINE_LIMIT_YEARLY="0"" >> /mnt//etc/snapper/configs/root
+    echo  "TIMELINE_LIMIT_HOURLY="1"" >> /mnt//etc/snapper/configs/root
+    echo  "TIMELINE_LIMIT_DAILY="1"" >> /mnt//etc/snapper/configs/root
+    echo  "TIMELINE_LIMIT_WEEKLY="1"" >> /mnt//etc/snapper/configs/root
+    echo  "TIMELINE_LIMIT_MONTHLT="1"" >> /mnt//etc/snapper/configs/root
+    echo  "TIMELINE_LIMIT_YEARLY="0"" >> /mnt//etc/snapper/configs/root
 
 
 
@@ -167,6 +204,7 @@ run() {
   bootloaderConfigs
   grubConfigs
   adicionalPackges_install
+  yayInstal
   sshConfigs
   systemctlConfigs
   snapperConfiguration
