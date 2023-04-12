@@ -2,17 +2,7 @@
 
 source colors.sh
 
-clear
-echo -e "\n${BOL_GRE}Cololindo o Pacman e Liberando Multilib${END}"
-sleep 1s
-  sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
-  sed -i 's/#UseSyslog/UseSyslog/' /etc/pacman.conf
-  sed -i 's/#Color/Color\\\nILoveCandy/' /etc/pacman.conf
-  sed -i 's/Color\\/Color/' /etc/pacman.conf
-  sed -i 's/#TotalDownload/TotalDownload/' /etc/pacman.conf
-  sed -i 's/#CheckSpace/CheckSpace/' /etc/pacman.conf
-  sed -i "s/#VerbosePkgLists/VerbosePkgLists/g" /etc/pacman.conf
-  sed -i "s/#ParallelDownloads = 5/ParallelDownloads = 5/g" /etc/pacman.conf
+
   
 echo -e "\n${BOL_GRE}Select the mirrors${END}"
 sleep 1s
@@ -73,8 +63,10 @@ else
   exit 0
 fi
 
-formatDrive() {
-  echo -e "\n${BOL_GRE}Formatando $SSD ${END}"
+}
+
+selectDisk() {
+  echo -e "\n${BOL_GRE}Selecioe a o disco para instatalçao: sda, sbc, nvme0n1 ${END}"
   	# Selecting the target for the installation.
 	PS3="Select the disk where Arch Linux is going to be installed: "
 	select ENTRY in $(lsblk -dpnoNAME|grep -P "/dev/sd|nvme|vd");
@@ -83,8 +75,11 @@ formatDrive() {
     		echo "Installing Arch Linux on $DISK."
     		break
 	done
+}
 
-	# Deleting old partition scheme.
+
+partitionScheme_old_deletion(){
+  echo -e "\n${BOL_RED}Deleting old partition scheme${END}"
 	read -r -p "This will delete the current partition table on $DISK. Do you agree [y/N]? " response
 	response=${response,,}
 	if [[ "$response" =~ ^(yes|y)$ ]]; then
@@ -94,20 +89,23 @@ formatDrive() {
     		echo "Quitting."
     		exit
 	fi
+}
 
 
-	# Deleting old partition scheme.
-	read -r -p "Do you want to create a GPT or MBR partition table? (Type GPT or MBR) " part_type
-	if [[ "$part_type" = "GPT" ]]; then
+create_GPTorMBR(){
+  echo -e "\n${BOL_RED}Create a GPT or MBR partition${END}"
+	read -r -p "Do you want to create a GPT or MBR partition table? (Type gpt or mbr) " part_type
+	if [[ "$part_type" = "gpt" ]]; then
     		part_type_flag="gpt"
-	elif [[ "$part_type" = "MBR" ]]; then
+	elif [[ "$part_type" = "mbr" ]]; then
     		part_type_flag="msdos"
 	else
     		echo "Invalid option. Exiting script."
    		exit
 	fi
+}
 
-
+newPartition_scheme(){
 	# Creating a new partition scheme.
 	echo "Creating new $part_type partition scheme on $DISK."
 	parted -s "$DISK" \
@@ -118,12 +116,24 @@ formatDrive() {
     
 	sleep 0.1
 	ESP="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep boot | cut -d " " -f1 | cut -c7-)"
-	echo "Partition boot: ${EPS}"
+	echo "Partition boot: ${ESP}"
 	sleep 1s
 	BTRFS="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep archlinux | cut -d " " -f1 | cut -c7-)"
 	echo "Partition Root: $BTRFS"
 	sleep 1s
+}
 
+
+
+
+
+
+
+
+formatDrive() {
+  
+
+	
 	if [ "$BIOS_TYPE" == "uefi" ]; then
 		mkdir -p /mnt/boot/efi
 		mount "$ESP" /mnt/boot/efi
@@ -270,6 +280,12 @@ recovery() {
 }
 
 run() {
+  selectDisk
+  partitionScheme_old_deletion
+  create_GPTorMBR
+  
+  
+  
   formatDrive
   encryptSystem
   unlockDisk
