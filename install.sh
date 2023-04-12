@@ -290,7 +290,7 @@ pacstrapInstall() {
   pacstrap /mnt linux-api-headers util-linux util-linux-libs lib32-util-linux
   
   echo -e "\n${BOL_CYA}Instalando bootloader e ferramentas relacionadas${END}"
-  pacstrap /mnt grub grub-btrfs grub-theme-vimix os-prober efibootmgr efitools gptfdisk
+  pacstrap /mnt grub grub-btrfs btrfs-progs grub-theme-vimix os-prober efibootmgr efitools gptfdisk
   
   echo -e "\n${BOL_CYA}Suporte a sistemas de arquivos${END}"
   pacstrap /mnt  btrfs-progs snapper dosfstools exfat-utils f2fs-tools fuse fuse-exfat mtpfs
@@ -299,7 +299,7 @@ pacstrapInstall() {
   pacstrap /mnt xorg-server xf86-input-evdev
   
    echo -e "\n${BOL_CYA}Ferramentas de linha de comando${END}"
-  pacstrap /mnt bash-completion sudo nano nano-syntax-highlighting 
+  pacstrap /mnt bash-completion sudo nano nano-syntax-highlighting git curl wget
   
 }
 
@@ -320,7 +320,7 @@ copyWifi() {
 }
 
 chrootPrepare() {
-  sed -i "3i SSD2=${BTRFS}" configure.sh
+  sed -i "3i DISK=${DISK}" configure.sh
   #sed -i "4i SSD3=${SSD3}" configure.sh
   chmod +x colors.sh && cp -rf colors.sh /mnt
   chmod +x configure.sh && cp -rf configure.sh /mnt && clear && sleep 5
