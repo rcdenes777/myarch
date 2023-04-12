@@ -75,12 +75,71 @@ fi
 
 formatDrive() {
   echo -e "\n${BOL_GRE}Formatando $SSD ${END}"
-  sgdisk --zap-all $SSD
-  sgdisk -g --clear \
-  --new=1:0:+1GiB --typecode=1:ef00 --change-name=1:EFI \
-  --new=2:0:+8GiB --typecode=2:8200 --change-name=2:cryptswap \
-  --new=3:0:0   --typecode=3:8300 --change-name=3:cryptsystem \
-  $SSD
+  	# Selecting the target for the installation.
+	PS3="Select the disk where Arch Linux is going to be installed: "
+	select ENTRY in $(lsblk -dpnoNAME|grep -P "/dev/sd|nvme|vd");
+	do
+    		DISK=$ENTRY
+    		echo "Installing Arch Linux on $DISK."
+    		break
+	done
+
+	# Deleting old partition scheme.
+	read -r -p "This will delete the current partition table on $DISK. Do you agree [y/N]? " response
+	response=${response,,}
+	if [[ "$response" =~ ^(yes|y)$ ]]; then
+    		wipefs -af "$DISK" &>/dev/null
+    		sgdisk -Zo "$DISK" &>/dev/null
+	else
+    		echo "Quitting."
+    		exit
+	fi
+
+
+	# Deleting old partition scheme.
+	read -r -p "Do you want to create a GPT or MBR partition table? (Type GPT or MBR) " part_type
+	if [[ "$part_type" = "GPT" ]]; then
+    		part_type_flag="gpt"
+	elif [[ "$part_type" = "MBR" ]]; then
+    		part_type_flag="msdos"
+	else
+    		echo "Invalid option. Exiting script."
+   		exit
+	fi
+
+
+	# Creating a new partition scheme.
+	echo "Creating new $part_type partition scheme on $DISK."
+	parted -s "$DISK" \
+    	mklabel $part_type_flag \
+    	mkpart ESP 1MiB 512MiB name 1 boot \
+    	set 1 esp on \
+    	mkpart archlinux 1024MiB 100% name 2 archlinux \
+    
+	sleep 0.1
+	ESP="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep boot | cut -d " " -f1 | cut -c7-)"
+	echo "Partition boot: ${EPS}"
+	sleep 1s
+	BTRFS="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep archlinux | cut -d " " -f1 | cut -c7-)"
+	echo "Partition Root: $BTRFS"
+	sleep 1s
+
+	if [ "$BIOS_TYPE" == "uefi" ]; then
+		mkdir -p /mnt/boot/efi
+		mount "$ESP" /mnt/boot/efi
+	fi
+	
+	if [ "$BIOS_TYPE" == "bios" ]; then
+		mkdir -p /mnt/boot
+		mount "$ESP" /mnt/boot
+	fi
+
+
+# Informing the Kernel of the changes.
+echo "Informing the Kernel about the disk changes."
+sleep 2s
+partprobe "$DISK"
+
 }
 
 encryptSystem() {
