@@ -281,7 +281,12 @@ cretingSwapfile() {
 reflectorMirrors() {
   	echo -e "\n${BOL_GRE}Instalando reflector para obter melhores mirrors${END}"
   	pacman -Sy reflector --noconfirm --needed
-  	reflector --verbose --sort rate -l 5 --save /etc/pacman.d/mirrorlist
+  	#reflector --verbose --sort rate -l 5 --save /etc/pacman.d/mirrorlist
+	#reflector -c BR --sort rate -a 6 --save /etc/pacman.d/mirrorlist
+	reflector --country Brazil   --protocol http --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+	echo -e "\n${BOL_BLU}Mirrors have been successfully updated${END}"
+	sleep 1s
+	pacman -Syyy --noconfirm
 }
 
 configurandoPacman(){
