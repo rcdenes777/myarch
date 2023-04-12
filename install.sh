@@ -4,15 +4,7 @@ source colors.sh
 
 
   
-echo -e "\n${BOL_GRE}Select the mirrors${END}"
-sleep 1s
-  pacman -Syyy --noconfirm
-  pacman -S --noconfirm reflector
-  #reflector --latest 40  --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-  #reflector -c BR --sort rate -a 6 --save /etc/pacman.d/mirrorlist
-  reflector --country Brazil   --protocol http --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-  echo -e "\n${BOL_BLU}Mirror selection completed${END}"
-  pacman -Syyy --noconfirm
+
     
     
 echo -e "\n${BOL_GRE}Update the system clock${END}"
@@ -110,35 +102,33 @@ createNew_partition_scheme(){
     
 	sleep 0.1
 	ESP="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep boot | cut -d " " -f1 | cut -c7-)"
-	echo "Partition boot: ${ESP}"
-	sleep 1s
+	echo -e "\n${BOL_GRE}Partition boot: ${ESP}${END}"
+	sleep 0.5s
 	
 	BTRFS="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep archlinux | cut -d " " -f1 | cut -c7-)"
-	echo "Partition Root: $BTRFS"
-	sleep 1s
+	echo -e "\n${BOL_GRE}Partition Root: $BTRFS${END}"
+	sleep 0.5s
 	
 	# Informing the Kernel of the changes.
-	echo "Informing the Kernel about the disk changes."
+	echo -e "\n${BOL_GRE}Informing the Kernel about the disk changes.$BTRFS${END}"
 	sleep 1s
 	partprobe "$DISK"
 
 }
 
 verifyBoot_mode() {
-  # Formatting the ESP as FAT32.
-  
-  echo -e "\n${BOL_GRE}Verify the boot mode${END}"
-  sleep 1s
-  	if [ -d /sys/firmware/efi ]; then
-	  	BIOS_TYPE="uefi"
-    		echo -e "\n${BOL_BLU}Install UEFI MODE${END}"
-    		sleep 1s
+ 	echo -e "\n${BOL_GRE}Verify the boot mode${END}"
+  	sleep 1s
+  		if [ -d /sys/firmware/efi ]; then
+	  		BIOS_TYPE="uefi"
+    			echo -e "\n${BOL_BLU}Install UEFI MODE${END}"
+    			sleep 1s
 	  
-  	else
-	  	BIOS_TYPE="bios"
-   	 	echo -e "\n${BOL_BLU}Install BIOS LEGACY MODE${END}"
-    		sleep 1s
- 	 fi
+  		else
+	  		BIOS_TYPE="bios"
+   	 		echo -e "\n${BOL_BLU}Install BIOS LEGACY MODE${END}"
+    			sleep 1s
+ 	 	fi
 formatting_UEFI_BIOS() {
 echo -e "\n${BOL_YEL}Formatting the EFI Partition as FAT32 or BIOS as${END}"
 
@@ -151,20 +141,7 @@ echo -e "\n${BOL_YEL}Formatting the EFI Partition as FAT32 or BIOS as${END}"
 	fi
 }
 		
-	if [ "$BIOS_TYPE" == "uefi" ]; then
-		mkdir -p /mnt/boot/efi
-		mount "$ESP" /mnt/boot/efi
-	fi
 	
-	if [ "$BIOS_TYPE" == "bios" ]; then
-		mkdir -p /mnt/boot
-		mount "$ESP" /mnt/boot
-	fi
-
-
-
-
-
 encryptSystem() {
   echo -e "\n${BOL_GRE}Criptografando partição principal - $SSD3 ${END}"
   cryptsetup luksFormat --align-payload=8192 -s 256 -c aes-xts-plain64 $SSD3
@@ -186,36 +163,128 @@ formatSwap() {
   swapon -L swap
 }
 
-formatPartitions() {
+formatPartitions_nocript() {
+  echo -e "\n${BOL_GRE}Formatando btrfs em $BTRFS{END}"
+  mkfs.btrfs $BTRFS 
+  #mkfs.btrfs --force --label $PARTNAME $BTRFS
+}
+
+formatPartitions_cript() {
   echo -e "\n${BOL_GRE}Formatando EFI e $SSD${END}"
   mkfs.fat -F32 -n EFI /dev/disk/by-partlabel/EFI
   mkfs.btrfs --force --label system /dev/mapper/system
+  
 }
 
 createSubVolumesBtrfs() {
-  echo -e "\n${BOL_GRE}Criando volumes${END}"
-  mount -t btrfs LABEL=system /mnt
-  btrfs subvolume create /mnt/root
-  btrfs subvolume create /mnt/home
-  btrfs subvolume create /mnt/snapshots
+  echo -e "\n${BOL_GRE}Creating BTRFS subvolumes${END}"
+ 	btrfs su cr /mnt/@ &>/dev/null
+	btrfs su cr /mnt/@/.snapshots &>/dev/null
+	mkdir -p /mnt/@/.snapshots/1 &>/dev/null
+	btrfs su cr /mnt/@/.snapshots/1/snapshot &>/dev/null
+	btrfs su cr /mnt/@/boot/ &>/dev/null
+	btrfs su cr /mnt/@/home &>/dev/null
+	btrfs su cr /mnt/@/root &>/dev/null
+	btrfs su cr /mnt/@/srv &>/dev/null
+	btrfs su cr /mnt/@/var_log &>/dev/null
+	btrfs su cr /mnt/@/var_log_journal &>/dev/null
+	btrfs su cr /mnt/@/var_crash &>/dev/null
+	btrfs su cr /mnt/@/var_cache &>/dev/null
+	btrfs su cr /mnt/@/var_tmp &>/dev/null
+	btrfs su cr /mnt/@/var_spool &>/dev/null
+	btrfs su cr /mnt/@/var_lib_libvirt_images &>/dev/null
+	btrfs su cr /mnt/@/var_lib_machines &>/dev/null
+	btrfs su cr /mnt/@/var_lib_sddm &>/dev/null
+	btrfs su cr /mnt/@/var_lib_AccountsService &>/dev/null
+	btrfs subvolume create /mnt/@swap
+	#btrfs su cr /mnt/@/cryptkey &>/dev/null
+
+	chattr +C /mnt/@/boot
+	chattr +C /mnt/@/srv
+	chattr +C /mnt/@/var_log
+	chattr +C /mnt/@/var_log_journal
+	chattr +C /mnt/@/var_crash
+	chattr +C /mnt/@/var_cache
+	chattr +C /mnt/@/var_tmp
+	chattr +C /mnt/@/var_spool
+	chattr +C /mnt/@/var_lib_libvirt_images
+	chattr +C /mnt/@/var_lib_machines
+	chattr +C /mnt/@/var_lib_sddm
+	chattr +C /mnt/@/var_lib_AccountsService
+	#chattr +C /mnt/@/cryptkey
 }
 
 mountPartitions() {
-  echo -e "\n${BOL_GRE}Montando volumes${END}"
-  o="defaults,x-mount.mkdir"
-  o_btrfs="$o,noatime,compress-force=zstd,commit=120,space_cache=v2,ssd"
-  umount -R /mnt
-  mount -t btrfs -o subvol=root,$o_btrfs LABEL=system /mnt
-  mount -t btrfs -o subvol=home,$o_btrfs LABEL=system /mnt/home
-  mount -t btrfs -o subvol=snapshots,$o_btrfs LABEL=system /mnt/snapshots
-  mkdir -p /mnt/boot
-  mount $SSD1 /mnt/boot
+  echo -e "\n${BOL_GRE}Mounting the newly created subvolumes${END}"
+  sleep 1s
+	umount /mnt
+	mount -o ssd,noatime,space_cache,compress=zstd:15 $BTRFS /mnt
+	mkdir -p /mnt/{boot,root,home,swap,.snapshots,srv,tmp,/var/log,/var/crash,/var/cache,/var/tmp,/var/spool,/var/lib/libvirt/images,/var/lib/machines,/var/lib/sddm,/var/lib/AccountsService}
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodev,nosuid,noexec,subvol=@/boot $BTRFS /mnt/boot
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodev,nosuid,subvol=@/root $BTRFS /mnt/root
+	mount -o ssd,noatime,space_cache=v2.autodefrag,compress=zstd:15,discard=async,nodev,nosuid,subvol=@/home $BTRFS /mnt/home
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,subvol=@/.snapshots $BTRFS /mnt/.snapshots
+	mount -o ssd,noatime,space_cache=v2.autodefrag,compress=zstd:15,discard=async,subvol=@/srv $BTRFS /mnt/srv
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_log $BTRFS /mnt/var/log
+
+	# Toolbox (https://github.com/containers/toolbox) needs /var/log/journal to have dev, suid, and exec, Thus I am splitting the subvolume. Need to make the directory after /mnt/var/log/ has been mounted.
+	mkdir -p /mnt/var/log/journal
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,subvol=@/var_log_journal $BTRFS /mnt/var/log/journal
+	
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_crash $BTRFS /mnt/var/crash
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_cache $BTRFS /mnt/var/cache
+
+# Pamac needs /var/tmp to have exec. Thus I am not adding that flag.
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,subvol=@/var_tmp $BTRFS /mnt/var/tmp
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_spool $BTRFS /mnt/var/spool
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_libvirt_images $BTRFS /mnt/var/lib/libvirt/images
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_machines $BTRFS /mnt/var/lib/machines
+
+# KDE requires /var/lib/sddm and /var/lib/AccountsService to be writeable when booting into a readonly snapshot. Thus we sadly have to split them.
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_sddm $BTRFS /mnt/var/lib/sddm
+	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_AccountsService $BTRFS /mnt/var/lib/AccountsService
+
+# mount swap for swapfile
+	mount -o defaults,noatime,subvol=@swap $BTRFS /mnt/swap
+	
+# The encryption is splitted as we do not want to include it in the backup with snap-pac.
+	#mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/cryptkey $BTRFS /mnt/cryptkey
+ 
+  
+mountPartitions_UFEI_BIOS() {
+ 	if [ "$BIOS_TYPE" == "uefi" ]; then
+		mkdir -p /mnt/boot/efi
+		mount "$ESP" /mnt/boot/efi
+	fi
+	
+	if [ "$BIOS_TYPE" == "bios" ]; then
+		mkdir -p /mnt/boot
+		mount "$ESP" /mnt/boot
+	fi
 }
 
+cretingSwapfile() {
+	read -p "Enter the size for the swapfile (e.g. 4G, 8G, 16G): " swapfile_size
+
+	# Creating Swap file
+	echo "Creating Swap file of size $swapfile_size"
+	sleep 1s
+	touch /mnt/swap/swapfile
+	chmod 600 /mnt/swap/swapfile
+	chattr +C /mnt/swap/swapfile
+	fallocate /mnt/swap/swapfile -l "$swapfile_size"
+	mkswap /mnt/swap/swapfile
+	swapon /mnt/swap/swapfile
+	sleep 1s
+
+
 reflectorMirrors() {
-  echo -e "\n${BOL_GRE}Instalando reflector para obter melhores mirrors${END}"
-  pacman -Sy reflector --noconfirm --needed
-  reflector --verbose --sort rate -l 5 --save /etc/pacman.d/mirrorlist
+  	echo -e "\n${BOL_GRE}Instalando reflector para obter melhores mirrors${END}"
+  	pacman -Sy reflector --noconfirm --needed
+  	reflector --verbose --sort rate -l 5 --save /etc/pacman.d/mirrorlist
+}
+
+configurandoPacman(){
   sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
   sed -i 's/#UseSyslog/UseSyslog/' /etc/pacman.conf
   sed -i 's/#Color/Color\\\nILoveCandy/' /etc/pacman.conf
@@ -223,7 +292,7 @@ reflectorMirrors() {
   sed -i 's/#TotalDownload/TotalDownload/' /etc/pacman.conf
   sed -i 's/#CheckSpace/CheckSpace/' /etc/pacman.conf
   sed -i "s/#VerbosePkgLists/VerbosePkgLists/g" /etc/pacman.conf
-  sed -i "s/#ParallelDownloads = 5/ParallelDownloads = 20/g" /etc/pacman.conf
+  sed -i "s/#ParallelDownloads = 5/ParallelDownloads = 5g" /etc/pacman.conf
 }
 
 pacstrapInstall() {
@@ -299,18 +368,18 @@ run() {
   createNew_partition_scheme
   verifyBoot_mode
   formatting_UEFI_BIOS
-  
-  
-  
-  formatDrive
-  encryptSystem
-  unlockDisk
-  unlockSwap
-  formatSwap
-  formatPartitions
+  #formatDrive
+  #encryptSystem
+  #unlockDisk
+  #unlockSwap
+  #formatSwap
+  #formatPartitions_cript
+  formatPartitions_nocript
   createSubVolumesBtrfs
   mountPartitions
+  cretingSwapfile
   reflectorMirrors
+  configurandoPacman
   pacstrapInstall
   genfstabGenerator
   cryptswapAdd
