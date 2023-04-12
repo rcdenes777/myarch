@@ -116,11 +116,13 @@ echo -e "\n${BOL_YEL}Formatting the EFI Partition as FAT32 or BIOS as${END}"
 
 	if [ "$BIOS_TYPE" == "uefi" ]; then
 		mkfs.fat -F32 "$ESP"
+		echo "Formatting completed successfully."
 		sleep 3s
 	fi
 	
 	if [ "$BIOS_TYPE" == "bios" ]; then
 		mkfs.ext4  "$ESP"
+		echo "Formatting completed successfully."
 		sleep 3s
 	fi
 }
@@ -150,8 +152,27 @@ formatSwap() {
 formatPartitions_nocript() {
   echo -e "\n${BOL_GRE}Formatando btrfs em $BTRFS{END}"
   mkfs.btrfs --force $BTRFS 
+  echo "Formatting completed successfully."
+  else
+    echo "Error formatting the partition as BTRFS."
+    exit 1
   sleep 3s
   #mkfs.btrfs --force --label $PARTNAME $BTRFS
+  echo "Mounting the partition BTRFS then /mnt."
+  sleep 2s
+
+  # Define a variável com o comando a ser executado
+  CMD="mount -o clear_cache,nospace_cache $BTRFS /mnt"
+
+  # Executa o comando e captura o código de retorno
+  $CMD
+  RETVAL=$?
+  # Verifica o código de retorno para determinar se o comando foi executado com sucesso
+  if [ $RETVAL -eq 0 ]; then
+  echo "O comando $CMD foi executado com sucesso."
+  else
+  echo "O comando $CMD retornou o código de erro $RETVAL."
+  fi
 }
 
 formatPartitions_cript() {
