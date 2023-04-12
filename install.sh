@@ -111,11 +111,13 @@ createNew_partition_scheme(){
   echo -e "\n${BOL_MAG}Criando duas partiçoes, uma de boot de 512MiB e o / com o restante do espaço${END}"
 	# Creating a new partition scheme.
 	echo "Creating new $part_type partition scheme on $DISK."
+	# Ask for partition name
+        read -r -p "Enter Root partition name: " PARTNAME
 	parted -s "$DISK" \
     	mklabel $part_type_flag \
     	mkpart ESP 1MiB 512MiB name 1 boot \
     	set 1 esp on \
-    	mkpart archlinux 1024MiB 100% name 2 archlinux \
+    	mkpart BTRFS 512MiB 100% name 2 $PARTNAME \
     
 	sleep 0.1
 	ESP="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep boot | cut -d " " -f1 | cut -c7-)"
