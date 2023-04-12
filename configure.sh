@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
-
 source colors.sh
 
+
+
 # Get the device uuid
-SSD2_UUID=$(blkid $SSD2 | awk -F '"' '{print $2}')
-SSD3_UUID=$(blkid $SSD3 | awk -F '"' '{print $2}')
+#SSD2_UUID=$(blkid $SSD2 | awk -F '"' '{print $2}')
+#SSD3_UUID=$(blkid $SSD3 | awk -F '"' '{print $2}')
+
+# Setting username.
+read -r -p "Please enter name for a user account (leave empty to skip): " USERNAME
+
+# Setting hostname.
+read -r -p "Please enter the hostname: " HOSTNAME
 
 createUseraAndHost() {
   useradd -m -G wheel -s /bin/bash $USERNAME
@@ -12,8 +19,8 @@ createUseraAndHost() {
   echo $HOSTNAME > /etc/hostname
   chown -R $USERNAME:$USERNAME /home/$USERNAME
   echo "127.0.0.1	localhost
-  ::1		localhost
-  127.0.1.1	${HOSTNAME}" | tee /etc/hosts
+  ::1		   localhost
+  127.0.1.1  ${HOSTNAME}.localdomain    ${HOSTNAME}" | tee -a /etc/hosts
 }
 
 reflectorMirrors() {
@@ -41,43 +48,55 @@ localeAndTime() {
 }
 
 mkinitcpioConfigs() {
-  sed -i "s/BINARIES=()/BINARIES=(btrfs)/g" /etc/mkinitcpio.conf
-  sed -i "s/block/block encrypt/g" /etc/mkinitcpio.conf
+  #sed -i "s/BINARIES=()/BINARIES=(btrfs)/g" /etc/mkinitcpio.conf
+  #sed -i "s/block/block encrypt/g" /etc/mkinitcpio.conf
   sed -i "s/#COMPRESSION=\"zstd\"/COMPRESSION=\"zstd\"/g" /etc/mkinitcpio.conf
   sed -i "s/#COMPRESSION_OPTIONS=()/COMPRESSION_OPTIONS=(-9)/g" /etc/mkinitcpio.conf
   mkinitcpio -P
 }
 
-bootloaderConfigs() {
-  bootctl --path=/boot install
-  mkdir -p /boot/loader/entries
-  "title   Arch Linux
-  linux   /vmlinuz-linux
-  initrd  /initramfs-linux.img
-  options rd.luks.name=${SSD3_UUID}=$DISK_NAME root=/dev/mapper/$DISK_NAME rootflags=subvol=root rd.luks.options=discard rw" | tee /boot/loader/entries/arch.conf
-
-  echo "default  arch.conf
-  timeout  4
-  console-mode max
-  editor   no" | tee /boot/loader/loader.conf
-}
-
 grubConfigs() {
   sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT=saved/g' /etc/default/grub
-  sed -i -e 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet splash acpi_backlight=vendor"/g' /etc/default/grub
-  sed -i -e 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="cryptdevice=UUID='${SSD3_UUID}':cryptsystem"/g' /etc/default/grub
-  sed -i 's/#GRUB_ENABLE_CRYPTODISK=y/GRUB_ENABLE_CRYPTODISK=y/g' /etc/default/grub
-  sed -i 's/#GRUB_SAVEDEFAULT=true/GRUB_SAVEDEFAULT=true/g' /etc/default/grub
-  sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/g' /etc/default/grub
-  grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=grub
-  grub-mkconfig -o /boot/grub/grub.cfg
-}
+  sed -i -e 's/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 acpi=noirq"/g' /etc/default/grub
+  #sed -i -e 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="cryptdevice=UUID='${SSD3_UUID}':cryptsystem"/g' /etc/default/grub
+  #sed -i 's/#GRUB_ENABLE_CRYPTODISK=y/GRUB_ENABLE_CRYPTODISK=y/g' /etc/default/grub
+  #sed -i 's/#GRUB_SAVEDEFAULT=true/GRUB_SAVEDEFAULT=true/g' /etc/default/grub
+  #sed -i 's/#GRUB_DISABLE_SUBMENU=y/GRUB_DISABLE_SUBMENU=y/g' /etc/default/grub
+    
+  if [ -d /sys/firmware/efi ]; then
+	  pacman -S btrfs-progs grub grub-btrfs efibootmgr --noconfirm
+	  grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB
+	  grub-mkconfig -o /boot/grub/grub.cfg
+  else
+	  pacman -S btrfs-progs grub grub-btrfs --noconfirm
+	  grub-install --target=i386-pc "$DISK"
+	  grub-mkconfig -o /boot/grub/grub.cfg
+  fi
+  
 
 systemdConfigs() {
   sed -i 's/#HandleLidSwitch=suspend/HandleLidSwitch=ignore/g' /etc/systemd/logind.conf
   sed -i 's/#NAutoVTs=6/NAutoVTs=6/g' /etc/systemd/logind.conf
 }
 
+adicionalPackges_install(){
+  echo -e "\n${BOL_CYA}Ferramentas de linha de comando 2${END}"
+  pacman -S neofetch zsh zsh-syntax-highlighting --noconfirm
+
+  echo -e "\n${BOL_CYA}KDE Plasma${END}"
+  pacman -S plasma-desktop --noconfirm
+
+  echo -e "\n${BOL_CYA}KDE Plasma utilitarios e extras${END}"
+  pacman -S konsole ark dolphin dolphin-plugins kate partitionmanager filelight okular plasma-nm kdeplasma-addons kcalc plasma-browser-integration --noconfirm
+  pacstrap /mnt  iwd networkmanager dhcpcd sudo nano reflector openssh git curl wget zsh \
+  pacstrap /mnt  alsa-firmware alsa-utils alsa-plugins pulseaudio pulseaudio-bluetooth pavucontrol \
+  pacstrap /mnt  sox bluez bluez-libs bluez-tools bluez-utils feh rofi dunst picom \
+  pacstrap /mnt  stow nano nano-syntax-highlighting neofetch vlc gpicview zsh zsh-syntax-highlighting maim ffmpeg \
+  pacstrap /mnt  imagemagick slop terminus-font noto-fonts-emoji ttf-dejavu ttf-liberation \
+  pacstrap /mnt  xorg-server xorg-xrandr xorg-xbacklight xorg-xinit xorg-xprop xorg-server-devel xorg-xsetroot xclip xsel xautolock xorg-xdpyinfo xorg-xinput \
+  pacstrap /mnt  i3-gaps i3lock alacritty thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman telegram-desktop
+ 
+ }
 sshConfigs() {
   pwd=$(pwd)
     rm -rf /etc/ssh/ssh_config
@@ -124,7 +143,7 @@ run() {
   mkinitcpioConfigs
   bootloaderConfigs
   grubConfigs
-  systemdConfigs
+  adicionalPackges_install
   sshConfigs
   systemctlConfigs
   sudoersConfigs
