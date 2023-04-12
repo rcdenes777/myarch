@@ -116,12 +116,12 @@ echo -e "\n${BOL_YEL}Formatting the EFI Partition as FAT32 or BIOS as${END}"
 
 	if [ "$BIOS_TYPE" == "uefi" ]; then
 		mkfs.fat -F32 "$ESP"
-		leep 3s
+		sleep 3s
 	fi
 	
 	if [ "$BIOS_TYPE" == "bios" ]; then
 		mkfs.ext4  "$ESP"
-		leep 3s
+		sleep 3s
 	fi
 }
 		
@@ -168,39 +168,39 @@ createSubVolumesBtrfs() {
 	#mkdir -p /mnt/@/.snapshots/1 &>/dev/null
 	#btrfs su cr /mnt/@/.snapshots/1/snapshot &>/dev/null
 	btrfs su cr /mnt/@/boot/ &>/dev/null
-	leep 3s
+	sleep 3s
 	btrfs su cr /mnt/@/home &>/dev/null
 	btrfs su cr /mnt/@/root &>/dev/null
 	btrfs su cr /mnt/@/srv &>/dev/null
 	btrfs su cr /mnt/@/var_log &>/dev/null
-	leep 3s
+	sleep 3s
 	btrfs su cr /mnt/@/var_log_journal &>/dev/null
 	btrfs su cr /mnt/@/var_crash &>/dev/null
 	btrfs su cr /mnt/@/var_cache &>/dev/null
 	btrfs su cr /mnt/@/var_tmp &>/dev/null
 	btrfs su cr /mnt/@/var_spool &>/dev/null
-	leep 3s
+	sleep 3s
 	btrfs su cr /mnt/@/var_lib_libvirt_images &>/dev/null
 	btrfs su cr /mnt/@/var_lib_machines &>/dev/null
 	btrfs su cr /mnt/@/var_lib_sddm &>/dev/null
 	btrfs su cr /mnt/@/var_lib_AccountsService &>/dev/null
 	btrfs subvolume create /mnt/@swap
 	#btrfs su cr /mnt/@/cryptkey &>/dev/null
-	leep 3s
+	sleep 3s
 
 	chattr +C /mnt/@/boot
 	chattr +C /mnt/@/srv
 	chattr +C /mnt/@/var_log
-	leep 3s
+	sleep 3s
 	chattr +C /mnt/@/var_log_journal
 	chattr +C /mnt/@/var_crash
 	chattr +C /mnt/@/var_cache
 	chattr +C /mnt/@/var_tmp
-	leep 3s
+	sleep 3s
 	chattr +C /mnt/@/var_spool
 	chattr +C /mnt/@/var_lib_libvirt_images
 	chattr +C /mnt/@/var_lib_machines
-	leep 3s
+	sleep 3s
 	chattr +C /mnt/@/var_lib_sddm
 	chattr +C /mnt/@/var_lib_AccountsService
 	#chattr +C /mnt/@/cryptkey
@@ -214,27 +214,27 @@ mountPartitions() {
 	mkdir -p /mnt/{boot,root,home,swap,.snapshots,srv,tmp,/var/log,/var/crash,/var/cache,/var/tmp,/var/spool,/var/lib/libvirt/images,/var/lib/machines,/var/lib/sddm,/var/lib/AccountsService}
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodev,nosuid,noexec,subvol=@/boot $BTRFS /mnt/boot
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodev,nosuid,subvol=@/root $BTRFS /mnt/root
-	leep 3s
+	sleep 3s
 	mount -o ssd,noatime,space_cache=v2.autodefrag,compress=zstd:15,discard=async,nodev,nosuid,subvol=@/home $BTRFS /mnt/home
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,subvol=@/.snapshots $BTRFS /mnt/.snapshots
 	mount -o ssd,noatime,space_cache=v2.autodefrag,compress=zstd:15,discard=async,subvol=@/srv $BTRFS /mnt/srv
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_log $BTRFS /mnt/var/log
 
-	leep 3s
+	sleep 3s
 	# Toolbox (https://github.com/containers/toolbox) needs /var/log/journal to have dev, suid, and exec, Thus I am splitting the subvolume. Need to make the directory after /mnt/var/log/ has been mounted.
 	mkdir -p /mnt/var/log/journal
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,subvol=@/var_log_journal $BTRFS /mnt/var/log/journal
 	
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_crash $BTRFS /mnt/var/crash
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_cache $BTRFS /mnt/var/cache
-	leep 3s
+	sleep 3s
 	
 # Pamac needs /var/tmp to have exec. Thus I am not adding that flag.
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,subvol=@/var_tmp $BTRFS /mnt/var/tmp
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_spool $BTRFS /mnt/var/spool
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_libvirt_images $BTRFS /mnt/var/lib/libvirt/images
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_machines $BTRFS /mnt/var/lib/machines
-	leep 3s
+	sleep 3s
 	
 # KDE requires /var/lib/sddm and /var/lib/AccountsService to be writeable when booting into a readonly snapshot. Thus we sadly have to split them.
 	mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/var_lib_sddm $BTRFS /mnt/var/lib/sddm
@@ -242,7 +242,7 @@ mountPartitions() {
 
 # mount swap for swapfile
 	mount -o defaults,noatime,subvol=@swap $BTRFS /mnt/swap
-	leep 3s
+	sleep 3s
 # The encryption is splitted as we do not want to include it in the backup with snap-pac.
 	#mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/cryptkey $BTRFS /mnt/cryptkey
 } 
@@ -251,13 +251,13 @@ mountPartitions_UFEI_BIOS() {
  	if [ "$BIOS_TYPE" == "uefi" ]; then
 		mkdir -p /mnt/boot/efi
 		mount "$ESP" /mnt/boot/efi
-		leep 1s
+		sleep 1s
 	fi
 	
 	if [ "$BIOS_TYPE" == "bios" ]; then
 		mkdir -p /mnt/boot
 		mount "$ESP" /mnt/boot
-		leep 1s
+		sleep 1s
 	fi
 }
 
@@ -270,11 +270,11 @@ cretingSwapfile() {
 	touch /mnt/swap/swapfile
 	chmod 600 /mnt/swap/swapfile
 	chattr +C /mnt/swap/swapfile
-	leep 3s
+	sleep 3s
 	fallocate /mnt/swap/swapfile -l "$swapfile_size"
 	mkswap /mnt/swap/swapfile
 	swapon /mnt/swap/swapfile
-	leep 3s
+	sleep 3s
 }
 
 
