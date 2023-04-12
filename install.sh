@@ -2,6 +2,12 @@
 
 source colors.sh
 
+
+echo -e "\n${BOL_GRE}Remontando cowspace com Size=3G${END}"
+echo "Remontando cowspace com Size=3G"
+mount -o remount,size=2G /run/archiso/cowspace
+sleep 2s
+
 echo -e "\n${BOL_GRE}Update the system clock${END}"
 sleep 1s
   timedatectl set-ntp true
@@ -99,6 +105,8 @@ verifyBoot_mode() {
    	 		echo -e "\n${BOL_BLU}Install BIOS LEGACY MODE${END}"
     			sleep 1s
  	 	fi
+}
+
 formatting_UEFI_BIOS() {
 echo -e "\n${BOL_YEL}Formatting the EFI Partition as FAT32 or BIOS as${END}"
 
@@ -219,7 +227,7 @@ mountPartitions() {
 	
 # The encryption is splitted as we do not want to include it in the backup with snap-pac.
 	#mount -o ssd,noatime,space_cache=v2,autodefrag,compress=zstd:15,discard=async,nodatacow,nodev,nosuid,noexec,subvol=@/cryptkey $BTRFS /mnt/cryptkey
- 
+} 
   
 mountPartitions_UFEI_BIOS() {
  	if [ "$BIOS_TYPE" == "uefi" ]; then
@@ -246,6 +254,7 @@ cretingSwapfile() {
 	mkswap /mnt/swap/swapfile
 	swapon /mnt/swap/swapfile
 	sleep 1s
+}
 
 
 reflectorMirrors() {
