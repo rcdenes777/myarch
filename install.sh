@@ -298,26 +298,16 @@ pacstrapInstall() {
   echo -e "\n${BOL_CYA}Xorg${END}"
   pacstrap /mnt xorg-server xf86-input-evdev
   
-  echo -e "\n${BOL_CYA}Ferramentas de linha de comando${END}"
-  pacstrap /mnt bash-completion sudo nano nano-syntax-highlighting neofetch zsh zsh-syntax-highlighting
-
-  echo -e "\n${BOL_CYA}KDE Plasma${END}"
-  pacstrap /mnt plasma-desktop konsole ark dolphin dolphin-plugins kate partitionmanager filelight okular plasma-nm kdeplasma-addons kcalc plasma-browser-integration
-
-  pacstrap /mnt  iwd networkmanager dhcpcd sudo nano reflector openssh git curl wget zsh \
-  pacstrap /mnt  alsa-firmware alsa-utils alsa-plugins pulseaudio pulseaudio-bluetooth pavucontrol \
-  pacstrap /mnt  sox bluez bluez-libs bluez-tools bluez-utils feh rofi dunst picom \
-  pacstrap /mnt  stow nano nano-syntax-highlighting neofetch vlc gpicview zsh zsh-syntax-highlighting maim ffmpeg \
-  pacstrap /mnt  imagemagick slop terminus-font noto-fonts-emoji ttf-dejavu ttf-liberation \
-  pacstrap /mnt  xorg-server xorg-xrandr xorg-xbacklight xorg-xinit xorg-xprop xorg-server-devel xorg-xsetroot xclip xsel xautolock xorg-xdpyinfo xorg-xinput \
-  pacstrap /mnt  i3-gaps i3lock alacritty thunar thunar-archive-plugin thunar-media-tags-plugin thunar-volman telegram-desktop
-
+   echo -e "\n${BOL_CYA}Ferramentas de linha de comando${END}"
+  pacstrap /mnt bash-completion sudo nano nano-syntax-highlighting 
+  
 }
 
 genfstabGenerator() {
   genfstab -L -p /mnt >> /mnt/etc/fstab
   sed -i "s+LABEL=swap+/dev/mapper/cryptswap+" /mnt/etc/fstab
 }
+
 
 cryptswapAdd() {
   echo "cryptswap $SSD2 /dev/urandom swap,offset=2048,cipher=aes-xts-plain64,size=256" >> /mnt/etc/crypttab
@@ -330,10 +320,8 @@ copyWifi() {
 }
 
 chrootPrepare() {
-  sed -i "2i USERNAME=${USERNAME}" configure.sh
-  sed -i "3i HOSTNAME=${HOSTNAME}" configure.sh
-  sed -i "4i SSD2=${SSD2}" configure.sh
-  sed -i "5i SSD3=${SSD3}" configure.sh
+  sed -i "3i SSD2=${BTRFS}" configure.sh
+  #sed -i "4i SSD3=${SSD3}" configure.sh
   chmod +x colors.sh && cp -rf colors.sh /mnt
   chmod +x configure.sh && cp -rf configure.sh /mnt && clear && sleep 5
   arch-chroot /mnt ./configure.sh
@@ -382,8 +370,8 @@ run() {
   configurandoPacman
   pacstrapInstall
   genfstabGenerator
-  cryptswapAdd
-  copyWifi
+  #cryptswapAdd
+  #copyWifi
   chrootPrepare
 }
 
