@@ -151,7 +151,7 @@ systemctlConfigs() {
 
   #systemctl enable dhcpcd
   #systemctl enable iwd
-  systemctl enable sshd.service
+  #systemctl enable sshd.service
   systemctl enable fstrim.timer
   
 }
@@ -205,7 +205,7 @@ run() {
   grubConfigs
   adicionalPackges_install
   yayInstal
-  sshConfigs
+  #sshConfigs
   systemctlConfigs
   snapperConfiguration
   sudoersConfigs
