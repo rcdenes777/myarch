@@ -151,28 +151,32 @@ formatSwap() {
 
 formatPartitions_nocript() {
   echo -e "\n${BOL_GRE}Formatando btrfs em $BTRFS{END}"
-  mkfs.btrfs --force $BTRFS 
-  echo "Formatting completed successfully."
-  else
-    echo "Error formatting the partition as BTRFS."
-    exit 1
-  sleep 3s
-  #mkfs.btrfs --force --label $PARTNAME $BTRFS
-  echo "Mounting the partition BTRFS then /mnt."
-  sleep 2s
+ sleep 2s
+	if  echo "Patiçao root  btrfs="${BTRFS}""
+    		sleep 1s
+    		mkfs.btrfs --force $BTRFS &>/dev/null; then
+   	 	echo "Formatting completed successfully."
+	else
+    		echo "Error formatting the partition as BTRFS."
+    		exit 1
+	fi
 
-  # Define a variável com o comando a ser executado
-  CMD="mount -o clear_cache,nospace_cache $BTRFS /mnt"
+	echo "Mounting the partition BTRFS then /mnt."
+	sleep 2s
 
-  # Executa o comando e captura o código de retorno
-  $CMD
-  RETVAL=$?
-  # Verifica o código de retorno para determinar se o comando foi executado com sucesso
-  if [ $RETVAL -eq 0 ]; then
-  echo "O comando $CMD foi executado com sucesso."
-  else
-  echo "O comando $CMD retornou o código de erro $RETVAL."
-  fi
+	# Define a variável com o comando a ser executado
+	CMD="mount -o clear_cache,nospace_cache $BTRFS /mnt"
+
+	# Executa o comando e captura o código de retorno
+	$CMD
+	RETVAL=$?
+	# Verifica o código de retorno para determinar se o comando foi executado com sucesso
+	if [ $RETVAL -eq 0 ]; then
+  		echo "O comando $CMD foi executado com sucesso."
+	else
+  		echo "O comando $CMD retornou o código de erro $RETVAL."
+	fi
+  
 }
 
 formatPartitions_cript() {
