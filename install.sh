@@ -66,7 +66,8 @@ fi
 }
 
 selectDisk() {
-  echo -e "\n${BOL_GRE}Selecioe a o disco para instatalçao: sda, sbc, nvme0n1 ${END}"
+  echo -e "\n${BOL_GRE}Selecionando o disco para instatalçao: sda,sbc,nvme0n1 ${END}"
+  sleep 0.5s
   	# Selecting the target for the installation.
 	PS3="Select the disk where Arch Linux is going to be installed: "
 	select ENTRY in $(lsblk -dpnoNAME|grep -P "/dev/sd|nvme|vd");
@@ -78,8 +79,9 @@ selectDisk() {
 }
 
 
-partitionScheme_old_deletion(){
+deletionPartition_scheme_old(){
   echo -e "\n${BOL_RED}Deleting old partition scheme${END}"
+  sleep 0.5s
 	read -r -p "This will delete the current partition table on $DISK. Do you agree [y/N]? " response
 	response=${response,,}
 	if [[ "$response" =~ ^(yes|y)$ ]]; then
@@ -105,7 +107,8 @@ create_GPTorMBR(){
 	fi
 }
 
-newPartition_scheme(){
+createNew_partition_scheme(){
+  echo -e "\n${BOL_MAG}Criando duas partiçoes, uma de boot de 512MiB e o / com o restante do espaço${END}"
 	# Creating a new partition scheme.
 	echo "Creating new $part_type partition scheme on $DISK."
 	parted -s "$DISK" \
@@ -120,7 +123,7 @@ newPartition_scheme(){
 	sleep 1s
 	BTRFS="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep archlinux | cut -d " " -f1 | cut -c7-)"
 	echo "Partition Root: $BTRFS"
-	sleep 1s
+	sleep 0.5s
 }
 
 
@@ -281,8 +284,9 @@ recovery() {
 
 run() {
   selectDisk
-  partitionScheme_old_deletion
+  deletionPartition_scheme_old
   create_GPTorMBR
+  createNew_partition_scheme
   
   
   
