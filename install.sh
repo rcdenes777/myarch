@@ -135,7 +135,7 @@ formatSwap() {
 
 formatPartitions_nocript() {
   echo -e "\n${BOL_GRE}Formatando btrfs em $BTRFS{END}"
-  mkfs.btrfs $BTRFS 
+  mkfs.btrfs --force $BTRFS 
   #mkfs.btrfs --force --label $PARTNAME $BTRFS
 }
 
@@ -150,8 +150,8 @@ createSubVolumesBtrfs() {
   echo -e "\n${BOL_GRE}Creating BTRFS subvolumes${END}"
  	btrfs su cr /mnt/@ &>/dev/null
 	btrfs su cr /mnt/@/.snapshots &>/dev/null
-	mkdir -p /mnt/@/.snapshots/1 &>/dev/null
-	btrfs su cr /mnt/@/.snapshots/1/snapshot &>/dev/null
+	#mkdir -p /mnt/@/.snapshots/1 &>/dev/null
+	#btrfs su cr /mnt/@/.snapshots/1/snapshot &>/dev/null
 	btrfs su cr /mnt/@/boot/ &>/dev/null
 	btrfs su cr /mnt/@/home &>/dev/null
 	btrfs su cr /mnt/@/root &>/dev/null
@@ -304,8 +304,8 @@ pacstrapInstall() {
 }
 
 genfstabGenerator() {
-  genfstab -L -p /mnt >> /mnt/etc/fstab
-  sed -i "s+LABEL=swap+/dev/mapper/cryptswap+" /mnt/etc/fstab
+  genfstab -U /mnt >> /mnt/etc/fstab
+  #sed -i "s+LABEL=swap+/dev/mapper/cryptswap+" /mnt/etc/fstab
 }
 
 
