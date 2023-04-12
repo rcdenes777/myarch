@@ -27,7 +27,7 @@ reflectorMirrors() {
   sed -i 's/#TotalDownload/TotalDownload/' /etc/pacman.conf
   sed -i 's/#CheckSpace/CheckSpace/' /etc/pacman.conf
   sed -i "s/#VerbosePkgLists/VerbosePkgLists/g" /etc/pacman.conf
-  sed -i "s/#ParallelDownloads = 5/ParallelDownloads = 20/g" /etc/pacman.conf
+  sed -i "s/#ParallelDownloads = 5/ParallelDownloads = 5/g" /etc/pacman.conf
 }
 
 localeAndTime() {
@@ -106,9 +106,37 @@ sshConfigs() {
 
 systemctlConfigs() {
   systemctl disable NetworkManager
-  systemctl enable dhcpcd
-  systemctl enable iwd
+  systemctl enable sddm
+  systemctl enable firewalld
+  systemctl enable reflector.timer
+  systemctl enable snapper-timeline.timer 
+  systemctl enable snapper-cleanup.timer 
+  systemctl enable grub-btrfs.path
+  #systemctl enable dhcpcd
+  #systemctl enable iwd
   systemctl enable sshd.service
+  systemctl enable fstrim.timer
+  
+}
+
+snapperConfiguration(){
+    # Snapper configuration
+    umount /.snapshots
+    rm -r /.snapshots
+    snapper --no-dbus -c root create-config /
+    btrfs subvolume delete /.snapshots
+    mkdir /.snapshots
+    mount -a
+    chmod 750 /.snapshots
+    echo  "TIMELINE_MIN_AGE="1800"" >> /mnt/etc/snapper/configs/root
+	echo  "TIMELINE_LIMIT_HOURLY="2"" >> /mnt//etc/snapper/configs/root
+	echo  "TIMELINE_LIMIT_DAILY="3"" >> /mnt//etc/snapper/configs/root
+	echo  "TIMELINE_LIMIT_WEEKLY="7"" >> /mnt//etc/snapper/configs/root
+	echo  "TIMELINE_LIMIT_MONTHLT="7"" >> /mnt//etc/snapper/configs/root
+	echo  "TIMELINE_LIMIT_YEARLY="0"" >> /mnt//etc/snapper/configs/root
+
+
+
 }
 
 sudoersConfigs() {
@@ -141,6 +169,7 @@ run() {
   adicionalPackges_install
   sshConfigs
   systemctlConfigs
+  snapperConfiguration
   sudoersConfigs
   passwords
 }
