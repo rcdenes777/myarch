@@ -43,9 +43,9 @@ deletionPartition_scheme_old(){
 	response=${response,,}
 	if [[ "$response" =~ ^(yes|y)$ ]]; then
     		wipefs -af "$DISK" &>/dev/null
-		leep 3s
+		sleep 3s
     		sgdisk -Zo "$DISK" &>/dev/null
-		leep 3s
+		sleep 3s
 	else
     		echo "Quitting."
     		exit
@@ -58,10 +58,10 @@ create_GPTorMBR(){
 	read -r -p "Do you want to create a GPT or MBR partition table? (Type gpt or mbr) " part_type
 	if [[ "$part_type" = "gpt" ]]; then
     		part_type_flag="gpt"
-		leep 3s
+		sleep 3s
 	elif [[ "$part_type" = "mbr" ]]; then
     		part_type_flag="msdos"
-		leep 3s
+		sleep 3s
 	else
     		echo "Invalid option. Exiting script."
    		exit
@@ -80,14 +80,14 @@ createNew_partition_scheme(){
     	set 1 esp on \
     	mkpart BTRFS 512MiB 100% name 2 $PARTNAME \
     
-	leep 3s
+	sleep 3s
 	ESP="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep boot | cut -d " " -f1 | cut -c7-)"
 	echo -e "\n${BOL_GRE}Partition boot: ${ESP}${END}"
 	sleep 0.5s
 	
 	BTRFS="/dev/$(lsblk $DISK -o NAME,PARTLABEL | grep archlinux | cut -d " " -f1 | cut -c7-)"
 	echo -e "\n${BOL_GRE}Partition Root: $BTRFS${END}"
-	leep 3s
+	sleep 3s
 	
 	# Informing the Kernel of the changes.
 	echo -e "\n${BOL_GRE}Informing the Kernel about the disk changes.$BTRFS${END}"
