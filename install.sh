@@ -4,6 +4,7 @@ source colors.sh
 
 clear
 echo -e "\n${BOL_GRE}Cololindo o Pacman e Liberando Multilib${END}"
+sleep 1s
   sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
   sed -i 's/#UseSyslog/UseSyslog/' /etc/pacman.conf
   sed -i 's/#Color/Color\\\nILoveCandy/' /etc/pacman.conf
@@ -14,15 +15,33 @@ echo -e "\n${BOL_GRE}Cololindo o Pacman e Liberando Multilib${END}"
   sed -i "s/#ParallelDownloads = 5/ParallelDownloads = 5/g" /etc/pacman.conf
   
 echo -e "\n${BOL_GRE}Select the mirrors${END}"
+sleep 1s
   pacman -Syyy --noconfirm
   pacman -S --noconfirm reflector
   #reflector --latest 40  --protocol https --sort rate --save /etc/pacman.d/mirrorlist
   #reflector -c BR --sort rate -a 6 --save /etc/pacman.d/mirrorlist
   reflector --country Brazil   --protocol http --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-
-echo -e "\n${BOL_BLU}Mirror selection completed${END}"
+  echo -e "\n${BOL_BLU}Mirror selection completed${END}"
   pacman -Syyy --noconfirm
-
+    
+    
+echo -e "\n${BOL_GRE}Update the system clock${END}"
+sleep 1s
+  timedatectl set-ntp true
+  timedatectl status
+  
+echo -e "\n${BOL_GRE}Verify the boot mode${END}"
+sleep 1s
+  if [ -d /sys/firmware/efi ]; then
+	  BIOS_TYPE="uefi"
+    echo -e "\n${BOL_BLU}Install UEFI MODE${END}"
+    sleep 1s
+	  
+  else
+	  BIOS_TYPE="bios"
+    echo -e "\n${BOL_BLU}Install BIOS LEGACY MODE${END}"
+    sleep 1s
+  fi
 
 
 read -r -p "${BOL_GRE}You username? ${MAG}enter=${CYA}mamutal91${END}" USERNAME
